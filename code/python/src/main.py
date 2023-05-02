@@ -405,6 +405,21 @@ def error_metric(depthmap_estimated, erp_gt_depthmap):
 
     return pred_metrics
 
+def getListOfFileDirs(dirName):
+    # create a list of file and sub directories names in the given directory
+    listOfFile = os.listdir(dirName.split()[0])
+    allFileDir = []
+    # Iterate over all the entries
+    for entry in listOfFile:
+        # Create full path
+        fullPath = os.path.join(dirName.split()[0], entry)
+        # If entry is a directory then get the list of files in this directory 
+        if os.path.isdir(fullPath):
+            allFileDir = allFileDir + getListOfFileDirs(fullPath)
+        else:
+            allFileDir.append("{} {}" .format(fullPath, dirName.split()[1]))
+                
+    return allFileDir
 
 def monodepth_360(opt):
     """Pipeline."""
@@ -417,6 +432,18 @@ def monodepth_360(opt):
     with open(opt.data_fns, 'r') as f:
         data_fns = f.readlines()
 
+    # Extracts filenames & directories from folders
+    tempDirList = []
+    filename_img = []
+    for idx in data_fns:
+        file_dirs = getListOfFileDirs(idx)
+        tempDirList.extend(file_dirs)
+    data_fns = tempDirList
+    for f in data_fns:
+        filename_img.append(os.path.basename(f.split()[0]).split('.')[0])
+
+    inputDataLen = len(data_fns)
+        
     if opt.sample_size > 0:
         np.random.seed(1337)
         data_fns = np.random.choice(data_fns, size=opt.sample_size, replace=False)
@@ -484,19 +511,20 @@ def monodepth_360(opt):
             erp_rgb_image_data = image_io.image_read(erp_image_filepath)
             # Load matrices for blending linear system
             estimated_depthmap, times = depthmap_estimation(erp_rgb_image_data, fnc, opt, blend_it, iter)
-
+            print("[{}/{}] --- Disparity of Image {} of {} Processed" .format(idx, inputDataLen, idx, inputDataLen))
+            
             # get error fo ERP depth map
             erp_gt_depthmap = depthmap_utils.read_dpt(erp_gt_filepath) if erp_gt_filepath != "" else None
             pred_metrics = error_metric(estimated_depthmap, erp_gt_depthmap) if erp_gt_filepath != "" else None
 
             serialization.save_predictions(output_folder, erp_gt_depthmap, erp_rgb_image_data, estimated_depthmap,
-                                           opt.persp_monodepth, idx=idx)
+                                           opt.persp_monodepth, filename_img[idx], idx=idx)
 
-            if opt.grid_search:
-                metrics_list.append(list(weights) + [item for dic in pred_metrics for item in dic.values()])
-            else:
-                serialization.save_metrics(output_results_file, pred_metrics, times, times_header,
-                                           idx, list(estimated_depthmap.keys()))
+            # if opt.grid_search:
+            #     metrics_list.append(list(weights) + [item for dic in pred_metrics for item in dic.values()])
+            # else:
+            #     serialization.save_metrics(output_results_file, pred_metrics, times, times_header,
+            #                                idx, list(estimated_depthmap.keys()))
 
             # Remove temporal storage folder
             if opt.rm_debug_folder and os.path.isdir(debug_output_dir):
