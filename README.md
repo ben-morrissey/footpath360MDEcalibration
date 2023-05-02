@@ -81,4 +81,3 @@ Data must be provided with the ```--data``` flag and must be a ```.txt``` file w
 	     .             .
 ```
 An example can be found at ```data/erp_00_data.txt```.
-In case of using data without GT, ```None``` should be written in the second column. 
