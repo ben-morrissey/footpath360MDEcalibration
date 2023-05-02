@@ -1,7 +1,5 @@
 from utility import fs_utility
 from utility.fs_utility import FileNameConvention
-# import matplotlib
-# matplotlib.use("TkAgg")
 
 import os
 import time
