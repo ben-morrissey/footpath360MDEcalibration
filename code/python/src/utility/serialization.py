@@ -337,10 +337,11 @@ def save_metrics(output_file, pred_metrics, times, times_header, idx, blending_m
     f.close()
 
 
-def save_predictions(output_folder, erp_gt_depthmap, erp_rgb_image_data, estimated_depthmap, persp_monodepth, idx=0):
+def save_predictions(output_folder, erp_gt_depthmap, erp_rgb_image_data, estimated_depthmap, persp_monodepth, filename_img, idx=0):
     # Plot error maps
     vmax = None
     vmin = None
+
     if erp_gt_depthmap is not None:
         mask = (erp_gt_depthmap > 0) & (~np.isinf(erp_gt_depthmap)) & (~np.isnan(erp_gt_depthmap)) & (erp_gt_depthmap <= 10)
         vmax = 10
@@ -352,14 +353,22 @@ def save_predictions(output_folder, erp_gt_depthmap, erp_rgb_image_data, estimat
         else:
             pred = estimated_depthmap[key]
 
-        plt.imsave(os.path.join(output_folder, "{:03}_360monodepth_{}_{}.png".format(idx, persp_monodepth, key)),
-                   pred, cmap="turbo", vmin=vmin, vmax=vmax)
+        
+        
+        # Saves the predictions in csv format
+        output_subfolder = os.path.join(output_folder, "{}_{}" .format(output_folder, persp_monodepth, key))
+        if not os.path.exists(output_subfolder):
+            os.makedirs(output_subfolder)
+        np.savetxt(os.path.join(output_subfolder, "{}_{}_{}.csv".format(filename_img, persp_monodepth, key)), pred, delimiter=",")
+        
+        # Saves npy file
+        np.save(os.path.join(output_subfolder, "{}_{}_{}.npy".format(filename_img, persp_monodepth, key)), pred, delimiter=",")
+        
+        # Saves the prediction as images
+        plt.imsave(os.path.join(output_subfolder, "{}_360monodepth_{}_{}.png".format(filename_img, persp_monodepth, key)),
+                  pred, cmap="turbo", vmin=vmin, vmax=vmax)
 
-    plt.imsave(os.path.join(output_folder, "{:03}_GT.png".format(idx)),
-               erp_gt_depthmap, vmin=vmin, vmax=vmax, cmap="turbo")
-    plt.imsave(os.path.join(output_folder, "{:03}_rgb.png".format(idx)), erp_rgb_image_data)
 
-    # metrics.visualize_error_maps(pred, erp_gt_depthmap, mask, idx=idx,
-    #                              save=True, input=erp_rgb_image_data,
-    #                              filename="{}/{}".format(opt.experiment_name, key))
-
+    if erp_gt_depthmap is not None:
+        plt.imsave(os.path.join(output_folder, "{}_GT.png".format(filename_img)),
+                   erp_gt_depthmap, vmin=vmin, vmax=vmax, cmap="turbo")
