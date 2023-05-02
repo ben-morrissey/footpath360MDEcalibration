@@ -1,31 +1,17 @@
-# 360MonoDepth
-### [Paper](https://arxiv.org/abs/2111.15669) | [Project Page](https://manurare.github.io/360monodepth/)
+# footpath360MDE
 
-This is the code for [360MonoDepth: High-Resolution 360° Monocular Depth Estimation](https://arxiv.org/abs/2111.15669)
+This code is an extension of [360MonoDepth: High-Resolution 360° Monocular Depth Estimation](https://arxiv.org/abs/2111.15669) to convert disparity maps into depth maps
  
 
- [Manuel Rey-Area](https://manurare.github.io/)\*,
- [Mingze Yuan](https://yuanmingze.github.io/)\*,
- [Christian Richardt](https://richardt.name/) <br>
- University of Bath  
-  \*denotes equal contribution  
- __CVPR 2022__
+Ben Morrissey<br>
+ University of New South Wales
+
+__CVPR 2022__
 <img src='imgs/pipeline.jpg'/>
 
 ## Setup
 
 Tested with Python >= 3.8
-
-
-Dependencies for C++ code:
- * Ceres 2.0.0
- * Eigen 3.3.9
- * Glog 0.5.0
- * Gflags 2.2.2
- * GTest 1.10.0
- * OpenCV 4.2.0
- * Boost 1.75.0
- * pybind11 2.8.1
 
 Dependencies for python are in ```code/python/requirements.txt```
 
@@ -88,20 +74,11 @@ python main.py --expname test_experiment --blending_method all --grid_size 8x7
 Data must be provided with the ```--data``` flag and must be a ```.txt``` file with the following structure:
 
 ```
-/path/to/dataset/filename00_rgb.[png,jpg] /path/to/dataset/filename00_depth.dpt
-/path/to/dataset/filename01_rgb.[png,jpg] /path/to/dataset/filename01_depth.dpt
-		.				          .
-		.				          .
-		.				          .
+/path/to/dataset/folder01 None
+/path/to/dataset/folder02 None
+	     .             .
+	     .             .
+	     .             .
 ```
 An example can be found at ```data/erp_00_data.txt```.
 In case of using data without GT, ```None``` should be written in the second column. 
-## Citation
-
-```
-@inproceedings{reyarea2021360monodepth,
-	title={{360MonoDepth}: High-Resolution 360{\deg} Monocular Depth Estimation},
-	author={Manuel Rey-Area and Mingze Yuan and Christian Richardt},
-	booktitle={CVPR},
-	year={2022}}
-```
