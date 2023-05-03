@@ -404,20 +404,22 @@ def error_metric(depthmap_estimated, erp_gt_depthmap):
     return pred_metrics
 
 def getListOfFileDirs(dirName):
-    # create a list of file and sub directories names in the given directory
-    listOfFile = os.listdir(dirName.split()[0])
+    # create a list of png and jpg files and sub directories names in the given directory
+    dir_path = dirName.split()[0]
+    listOfJPGs = [Path(x).name for x in glob(fr'{dir_path}/*.jpg')]
+    listOfPNGs = [Path(i).name for i in glob(fr'{dir_path}/*.png')]
+    listOfFile = listOfJPGs + listOfPNGs
     allFileDir = []
     # Iterate over all the entries
-    for entry in listOfFile:
+    for entry in sorted(listOfFile):
         # Create full path
-        fullPath = os.path.join(dirName.split()[0], entry)
-        # If entry is a directory then get the list of files in this directory 
+        fullPath = os.path.join(dir_path, entry)
+        # If entry is a directory then get the list of files in this directory
         if os.path.isdir(fullPath):
             allFileDir = allFileDir + getListOfFileDirs(fullPath)
         else:
             allFileDir.append("{} {}" .format(fullPath, dirName.split()[1]))
-                
-    return allFileDir
+    return sorted(allFileDir)
 
 def monodepth_360(opt):
     """Pipeline."""
