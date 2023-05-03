@@ -6,8 +6,6 @@ This code is an extension of [360MonoDepth: High-Resolution 360° Monocular Dept
 Ben Morrissey<br>
  University of New South Wales
 
-__CVPR 2022__
-<img src='imgs/pipeline.jpg'/>
 
 ## Setup
 
