@@ -1,5 +1,7 @@
 from utility import fs_utility
 from utility.fs_utility import FileNameConvention
+# import matplotlib
+# matplotlib.use("TkAgg")
 
 import os
 import time
@@ -9,6 +11,7 @@ import numpy as np
 from PIL import Image
 import shutil
 import argparse
+from glob import glob
 
 from utility import depthmap_align, image_io
 from utility import depthmap_utils, metrics
@@ -103,6 +106,10 @@ class Options():
                                                                                             "pipeline")
         parser.add_argument("--grid_search", default=False, action='store_true')
         parser.add_argument("--sample_size", type=int, default=0, help="Sample a subset from --data")
+        parser.add_argument("--depth_map_type", type=str, default='depth', choices=['depth', 'disparity'])
+        parser.add_argument("--baseline", type=float, default=73.48)
+        parser.add_argument("--focal_length", type=float, default=1)
+        parser.add_argument("--disparity_offset", type=float, default=2.24)
         opt_arguments = parser.parse_args()
 
         # 2) update options
@@ -123,6 +130,10 @@ class Options():
         self.persp_monodepth = opt_arguments.persp_monodepth
         self.available_steps = opt_arguments.depthalignstep
         self.sample_size = opt_arguments.sample_size
+        self.depth_map_type = opt_arguments.depth_map_type
+        self.baseline = opt_arguments.baseline
+        self.disparity_offset = opt_arguments.disparity_offset
+        self.focal_length = opt_arguments.focal_length
 
         self.print()
 
@@ -403,6 +414,20 @@ def error_metric(depthmap_estimated, erp_gt_depthmap):
 
     return pred_metrics
 
+# Convert disparity map to depth map
+def disparity2depth(disparity_map, baseline, offset, focal):
+    # Normalises the Disparity Map
+    disparity_map -= np.nanmin(disparity_map)
+    # Offsets Disparity Map
+    disparity_map += offset
+    # Gets Indexes of non-zero values in Disparity Map
+    no_zeros_index = np.where(disparity_map != 0)
+    #Initialises Depth Map
+    depth_map = np.full(disparity_map.shape, np.Inf, np.float64)
+    # Fills Depth Map with Converted Depth Value from Disparity
+    depth_map[no_zeros_index] = (baseline * focal) / disparity_map[no_zeros_index] # depth_map = (baseline * focal) / disparity_map
+    return np.array(depth_map)
+
 def getListOfFileDirs(dirName):
     # create a list of png and jpg files and sub directories names in the given directory
     dir_path = dirName.split()[0]
@@ -443,7 +468,8 @@ def monodepth_360(opt):
         filename_img.append(os.path.basename(f.split()[0]).split('.')[0])
 
     inputDataLen = len(data_fns)
-        
+
+
     if opt.sample_size > 0:
         np.random.seed(1337)
         data_fns = np.random.choice(data_fns, size=opt.sample_size, replace=False)
@@ -511,20 +537,23 @@ def monodepth_360(opt):
             erp_rgb_image_data = image_io.image_read(erp_image_filepath)
             # Load matrices for blending linear system
             estimated_depthmap, times = depthmap_estimation(erp_rgb_image_data, fnc, opt, blend_it, iter)
-            print("[{}/{}] --- Disparity of Image {} of {} Processed" .format(idx, inputDataLen, idx, inputDataLen))
+            
             
             # get error fo ERP depth map
             erp_gt_depthmap = depthmap_utils.read_dpt(erp_gt_filepath) if erp_gt_filepath != "" else None
             pred_metrics = error_metric(estimated_depthmap, erp_gt_depthmap) if erp_gt_filepath != "" else None
 
-            serialization.save_predictions(output_folder, erp_gt_depthmap, erp_rgb_image_data, estimated_depthmap,
-                                           opt.persp_monodepth, filename_img[idx], idx=idx)
+            # Convert disparity to depth
+            if opt.depth_map_type == 'depth':
+                estimated_depthmap = disparity2depth(estimated_depthmap, opt.baseline, opt.disparity_offset, opt.focal_length)
+            elif opt.depth_map_type == 'disparity':
+                None
 
-            # if opt.grid_search:
-            #     metrics_list.append(list(weights) + [item for dic in pred_metrics for item in dic.values()])
-            # else:
-            #     serialization.save_metrics(output_results_file, pred_metrics, times, times_header,
-            #                                idx, list(estimated_depthmap.keys()))
+            serialization.save_predictions(output_folder, erp_gt_depthmap, erp_rgb_image_data, estimated_depthmap,
+                                           opt.persp_monodepth, filename_img[idx], idx)
+
+            print("[{}/{}] --- Disparity of Image {} of {} Processed" .format(idx+1, inputDataLen, idx+1, inputDataLen))
+
 
             # Remove temporal storage folder
             if opt.rm_debug_folder and os.path.isdir(debug_output_dir):
