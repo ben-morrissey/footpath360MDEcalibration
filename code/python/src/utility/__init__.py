@@ -8,7 +8,6 @@ sys.path.append(python_src_dir)  # /code/python/src/
 sys.path.append(python_src_dir + "/utility/")  # /code/python/src/
 sys.path.append(os.path.dirname(python_src_dir))  # /code/python/
 sys.path.append(os.path.abspath(os.path.join(python_src_dir, os.pardir, os.pardir, "cpp/lib")))
-# sys.path.append(os.path.join(python_src_dir, "../.."))  # CR: unused?
 
 # Data directory /data/
 # TODO: remove the trailing slash once all usages of TEST_DATA_DIR are updated
