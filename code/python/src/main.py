@@ -93,7 +93,7 @@ class Options():
                             choices=['poisson', 'frustum', 'radial', 'nn', 'mean', 'all'])
         parser.add_argument("--data", type=str, default="../../../data/erp_00_data.txt",
                             help="The format of this file needs to be one line per sample as following: "
-                                 "/path/to/rgb.[png,jpg] /path/to/depth_gt.dpt")
+                                 "/path/to/rgb.[png,jpg] None")
         parser.add_argument("--grid_size", type=grid_size_type, default="8x7", help="width x height")
         parser.add_argument("--padding", type=float, default="0.3")
         parser.add_argument("--multires_levels", type=int, default=1, help="Levels of multi-resolution pyramid. If > 1"
